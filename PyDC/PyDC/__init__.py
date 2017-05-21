@@ -12,9 +12,9 @@
 import os
 import sys
 
-from CassetteObjects import Cassette
-from utils import print_bitlist
-from wave2bitstream import Wave2Bitstream, Bitstream2Wave
+from .CassetteObjects import Cassette
+from .utils import print_bitlist
+from .wave2bitstream import Wave2Bitstream, Bitstream2Wave
 
 
 __version__ = (0, 1, 0, 'dev')
@@ -47,7 +47,7 @@ def convert(source_file, destination_file, cfg):
             "Destination file type %r not supported." % repr(dest_ext)
         )
 
-    print "Convert %s -> %s" % (source_ext, dest_ext)
+    print("Convert %s -> %s" % (source_ext, dest_ext))
 
     c = Cassette(cfg)
 
@@ -93,9 +93,9 @@ if __name__ == "__main__":
         "../test_files/HelloWorld1.bas", "--dst=../test.cas"
     ]).wait()
 
-    print "\n"*3
-    print "="*79
-    print "\n"*3
+    print("\n"*3)
+    print("="*79)
+    print("\n"*3)
 
 #     # wav -> bas
     subprocess.Popen([sys.executable, "../PyDC_cli.py",
@@ -106,4 +106,4 @@ if __name__ == "__main__":
 #         "../test_files/HelloWorld1 origin.wav", "--dst=../test_files/HelloWorld1.bas",
     ]).wait()
 
-    print "-- END --"
+    print("-- END --")

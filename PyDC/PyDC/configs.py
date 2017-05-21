@@ -21,23 +21,23 @@ class BaseConfig(object):
     VOLUME_RATIO = 90 # "Loundness" in percent of the created wave file
 
     def print_debug_info(self):
-        from utils import byte2bit_string
+        from .utils import byte2bit_string
 
-        print "Config: '%s'" % self.__class__.__name__
+        print("Config: '%s'" % self.__class__.__name__)
 
         for name, value in inspect.getmembers(self): # , inspect.isdatadescriptor):
             if name.startswith("_"):
                 continue
 #             print name, type(value)
-            if not isinstance(value, (int, basestring, list, tuple, dict)):
+            if not isinstance(value, (int, str, list, tuple, dict)):
                 continue
-            if isinstance(value, (int,)):
+            if isinstance(value, int):
                 bit_string = byte2bit_string(value)
-                print "%20s = %-4s (in hex: %7s - binary: %s)" % (
+                print("%20s = %-4s (in hex: %7s - binary: %s)" % (
                     name, value, repr(hex(value)), bit_string
-                )
+                ))
             else:
-                print "%20s = %s" % (name, value)
+                print("%20s = %s" % (name, value))
 
 
 class Dragon32Config(BaseConfig):
@@ -127,7 +127,7 @@ class Dragon32Config(BaseConfig):
 
 if __name__ == "__main__":
     import doctest
-    print doctest.testmod(
+    print(doctest.testmod(
         verbose=False
         # verbose=True
-    )
+    ))

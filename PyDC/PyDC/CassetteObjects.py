@@ -17,11 +17,11 @@ import os
 import sys
 
 # own modules
-from basic_tokens import bytes2codeline
-from utils import get_word, codepoints2string, string2codepoint, LOG_LEVEL_DICT, \
+from .basic_tokens import bytes2codeline
+from .utils import get_word, codepoints2string, string2codepoint, LOG_LEVEL_DICT, \
     LOG_FORMATTER, pformat_codepoints
-from wave2bitstream import Wave2Bitstream, Bitstream2Wave
-from bitstream_handler import BitstreamHandler, CasStream, BytestreamHandler
+from .wave2bitstream import Wave2Bitstream, Bitstream2Wave
+from .bitstream_handler import BitstreamHandler, CasStream, BytestreamHandler
 from PyDC.utils import iter_steps
 
 
@@ -68,7 +68,7 @@ class FileContent(object):
                 evalue = etype(
                     "Error split line: %s (line: %s)" % (evalue, repr(line))
                 )
-                raise etype, evalue, etb
+                raise etype(evalue).with_traceback(etb)
             line_number = int(line_number)
 
             if self.cfg.case_convert:
@@ -168,7 +168,7 @@ class FileContent(object):
         while True:
             try:
                 line_pointer = get_word(data)
-            except (StopIteration, IndexError), err:
+            except (StopIteration, IndexError) as err:
                 log.error("No line pointer information in code line data. (%s)" % err)
                 break
 #             print "line_pointer:", repr(line_pointer)
@@ -179,7 +179,7 @@ class FileContent(object):
 
             try:
                 line_number = get_word(data)
-            except (StopIteration, IndexError), err:
+            except (StopIteration, IndexError) as err:
                 log.error("No line number information in code line data. (%s)" % err)
                 break
 #             print "line_number:", repr(line_number)
@@ -192,7 +192,7 @@ class FileContent(object):
 
             # get the code line:
             # new iterator to get all characters until 0x00 arraived
-            code = iter(data.next, 0x00)
+            code = iter(data.__next__, 0x00)
 
             code = list(code) # for len()
             byte_count += len(code) + 1 # from 0x00 consumed in iter()
@@ -207,9 +207,9 @@ class FileContent(object):
                 CodeLine(line_pointer, line_number, code)
             )
 
-        print "%i Bytes parsed" % byte_count
+        print("%i Bytes parsed" % byte_count)
         if block_length != byte_count:
-            print "ERROR: Block length value %i is not equal to parsed bytes!" % block_length
+            print("ERROR: Block length value %i is not equal to parsed bytes!" % block_length)
 
     def add_ascii_block(self, block_length, data):
         """
@@ -233,10 +233,10 @@ class FileContent(object):
         """
         data = iter(data)
 
-        data.next() # Skip first \r
+        next(data) # Skip first \r
         byte_count = 1 # incl. first \r
         while True:
-            code = iter(data.next, 0xd) # until \r
+            code = iter(data.__next__, 0xd) # until \r
             code = "".join([chr(c) for c in code])
 
             if not code:
@@ -247,21 +247,21 @@ class FileContent(object):
 
             try:
                 line_number, code = code.split(" ", 1)
-            except ValueError, err:
-                print "\nERROR: Splitting linenumber in %s: %s" % (repr(code), err)
+            except ValueError as err:
+                print("\nERROR: Splitting linenumber in %s: %s" % (repr(code), err))
                 break
 
             try:
                 line_number = int(line_number)
-            except ValueError, err:
-                print "\nERROR: Part '%s' is not a line number!" % repr(line_number)
+            except ValueError as err:
+                print("\nERROR: Part '%s' is not a line number!" % repr(line_number))
                 continue
 
             self.code_lines.append(
                 CodeLine(None, line_number, code)
             )
 
-        print "%i Bytes parsed" % byte_count
+        print("%i Bytes parsed" % byte_count)
         if block_length != byte_count:
             log.error(
                 "Block length value %i is not equal to parsed bytes!" % block_length
@@ -286,13 +286,13 @@ class FileContent(object):
 
     def print_code_lines(self):
         for code_line in self.code_lines:
-            print "%i %s" % (code_line.line_no, code_line.code)
+            print("%i %s" % (code_line.line_no, code_line.code))
 
     def print_debug_info(self):
-        print "\tcode lines:"
-        print "-"*79
+        print("\tcode lines:")
+        print("-"*79)
         self.print_code_lines()
-        print "-"*79
+        print("-"*79)
 
 
 class CassetteFile(object):
@@ -330,7 +330,7 @@ class CassetteFile(object):
         raw_filename = codepoints[:8]
 
         self.filename = codepoints2string(raw_filename).rstrip()
-        print "\nFilename: %s" % repr(self.filename)
+        print("\nFilename: %s" % repr(self.filename))
 
         self.file_type = codepoints[8]
 
@@ -382,9 +382,9 @@ class CassetteFile(object):
         else:
             self.file_content.add_ascii_block(block_length, codepoints)
 
-        print "*"*79
+        print("*"*79)
         self.file_content.print_code_lines()
-        print "*"*79
+        print("*"*79)
 
     def get_filename_block_as_codepoints(self):
         """
@@ -429,9 +429,9 @@ class CassetteFile(object):
         return result
 
     def print_debug_info(self):
-        print "\tFilename: '%s'" % self.filename
-        print "\tfile type: %s" % self.cfg.FILETYPE_DICT[self.file_type]
-        print "\tis tokenized:", self.is_tokenized
+        print("\tFilename: '%s'" % self.filename)
+        print("\tfile type: %s" % self.cfg.FILETYPE_DICT[self.file_type])
+        print("\tis tokenized:", self.is_tokenized)
         self.file_content.print_debug_info()
 
     def __repr__(self):
@@ -537,7 +537,7 @@ class Cassette(object):
             raise TypeError("Block type %s unkown!" & hex(block_type))
 
     def print_debug_info(self):
-        print "There exists %s files:" % len(self.files)
+        print("There exists %s files:" % len(self.files))
         for file_obj in self.files:
             file_obj.print_debug_info()
 
@@ -548,7 +548,7 @@ class Cassette(object):
             log.debug("yield %sx bit-sync bytes %s",
                 self.cfg.LEAD_BYTE_LEN, hex(self.cfg.LEAD_BYTE_CODEPOINT)
             )
-            leadin = [self.cfg.LEAD_BYTE_CODEPOINT for _ in xrange(self.cfg.LEAD_BYTE_LEN)]
+            leadin = [self.cfg.LEAD_BYTE_CODEPOINT for _ in range(self.cfg.LEAD_BYTE_LEN)]
             yield leadin
 
         log.debug("yield 1x leader byte %s", hex(self.cfg.LEAD_BYTE_CODEPOINT))
@@ -655,7 +655,7 @@ class Cassette(object):
         def _write(f, codepoint):
             try:
                 f.write(chr(codepoint))
-            except ValueError, err:
+            except ValueError as err:
                 log.error("Value error with %s: %s" % (repr(codepoint), err))
                 raise
 
@@ -667,7 +667,7 @@ class Cassette(object):
                 else:
                     _write(f, codepoint)
 
-        print "\nFile %s saved." % repr(destination_file)
+        print("\nFile %s saved." % repr(destination_file))
 
     def write_bas(self, destination_file):
         dest_filename = os.path.splitext(destination_file)[0]
@@ -682,7 +682,7 @@ class Cassette(object):
                     if self.cfg.case_convert:
                         line = line.lower()
                     f.write("%s\n" % line)
-            print "\nFile %s saved." % repr(out_filename)
+            print("\nFile %s saved." % repr(out_filename))
 
     def pprint_codepoint_stream(self):
         log_level = LOG_LEVEL_DICT[3]
@@ -694,8 +694,8 @@ class Cassette(object):
 
         for codepoint in self.codepoint_stream():
             try:
-                print hex(codepoint),
-            except TypeError, err:
+                print(hex(codepoint), end=' ')
+            except TypeError as err:
                 raise TypeError(
                     "\n\nERROR with '%s': %s" % (repr(codepoint), err)
                 )

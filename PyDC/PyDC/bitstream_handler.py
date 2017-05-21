@@ -23,7 +23,7 @@ import sys
 log = logging.getLogger("PyDC")
 
 # own modules
-from utils import find_iter_window, iter_steps, MaxPosArraived, \
+from .utils import find_iter_window, iter_steps, MaxPosArraived, \
     print_bitlist, bits2codepoint, list2str, bitstream2codepoints, \
     PatternNotFound, count_the_same, codepoints2bitstream, pformat_codepoints
 
@@ -71,9 +71,9 @@ def print_block_table(block_codepoints):
     for block in block_codepoints:
         byte_no = bits2codepoint(block)
         character = chr(byte_no)
-        print "%s %4s %3s %s" % (
+        print("%s %4s %3s %s" % (
             list2str(block), hex(byte_no), byte_no, repr(character)
-        )
+        ))
 
 
 def print_as_hex(block_codepoints):
@@ -82,7 +82,7 @@ def print_as_hex(block_codepoints):
         byte_no = bits2codepoint(block)
         character = chr(byte_no)
         line += hex(byte_no)
-    print line
+    print(line)
 
 
 
@@ -93,14 +93,14 @@ class BitstreamHandlerBase(object):
 
     def feed(self, bitstream):
         while True:
-            print "_"*79
+            print("_"*79)
     #         bitstream = list(bitstream)
     #         print " ***** Bitstream length:", len(bitstream)
     #         bitstream = iter(bitstream)
 
             try:
                 self.sync_bitstream(bitstream) # Sync bitstream with SYNC_BYTE
-            except SyncByteNotFoundError, err:
+            except SyncByteNotFoundError as err:
                 log.error(err)
                 log.info("Last wave pos: %s" % bitstream.pformat_pos())
                 break
@@ -110,11 +110,11 @@ class BitstreamHandlerBase(object):
             try:
                 block_type_name = self.cfg.BLOCK_TYPE_DICT[block_type]
             except KeyError:
-                print "ERROR: Block type %s unknown in BLOCK_TYPE_DICT!" % hex(block_type)
-                print "-"*79
-                print "Debug bitlist:"
+                print("ERROR: Block type %s unknown in BLOCK_TYPE_DICT!" % hex(block_type))
+                print("-"*79)
+                print("Debug bitlist:")
                 print_bitlist(bitstream)
-                print "-"*79
+                print("-"*79)
                 break
 
 
@@ -129,14 +129,14 @@ class BitstreamHandlerBase(object):
                 break
 
             if block_length == 0:
-                print "ERROR: block length == 0 ???"
-                print "-"*79
-                print "Debug bitlist:"
+                print("ERROR: block length == 0 ???")
+                print("-"*79)
+                print("Debug bitlist:")
                 print_bitlist(bitstream)
-                print "-"*79
+                print("-"*79)
                 break
 
-            print "="*79
+            print("="*79)
 
         self.cassette.buffer2file()
 
@@ -153,7 +153,7 @@ class BitstreamHandlerBase(object):
             verbose_block_type = self.cfg.BLOCK_TYPE_DICT[block_type]
         except KeyError:
             log.error("Blocktype unknown!")
-            print pformat_codepoints(codepoints)
+            print(pformat_codepoints(codepoints))
             sys.exit()
             verbose_block_type = hex(block_type)
 
@@ -220,12 +220,12 @@ class BitstreamHandler(BitstreamHandlerBase):
         max_pos = self.cfg.LEAD_BYTE_LEN * 8
         try:
             leader_pos = find_iter_window(bitstream, lead_in_pattern, max_pos)
-        except MaxPosArraived, err:
+        except MaxPosArraived as err:
             log.error("Error: Leader-Byte '%s' (%s) not found in the first %i Bytes! (%s)" % (
                 list2str(lead_in_pattern), hex(self.cfg.LEAD_BYTE_CODEPOINT),
                 self.cfg.LEAD_BYTE_LEN, err
             ))
-        except PatternNotFound, err:
+        except PatternNotFound as err:
             log.error("Error: Leader-Byte '%s' (%s) doesn't exist in bitstream! (%s)" % (
                 list2str(lead_in_pattern), hex(self.cfg.LEAD_BYTE_CODEPOINT), err
             ))
@@ -242,14 +242,14 @@ class BitstreamHandler(BitstreamHandlerBase):
         max_search_bits = self.cfg.MAX_SYNC_BYTE_SEARCH * 8
         try:
             sync_pos = find_iter_window(bitstream, sync_pattern, max_search_bits)
-        except MaxPosArraived, err:
+        except MaxPosArraived as err:
             raise SyncByteNotFoundError(
                 "Error: Sync-Byte '%s' (%s) not found in the first %i Bytes! (%s)" % (
                     list2str(sync_pattern), hex(self.cfg.SYNC_BYTE_CODEPOINT),
                     self.cfg.MAX_SYNC_BYTE_SEARCH, err
                 )
             )
-        except PatternNotFound, err:
+        except PatternNotFound as err:
             raise SyncByteNotFoundError(
                 "Error: Sync-Byte '%s' (%s) doesn't exist in bitstream! (%s)" % (
                     list2str(sync_pattern), hex(self.cfg.SYNC_BYTE_CODEPOINT),
@@ -277,8 +277,8 @@ class CasStream(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        byte = self.file_generator.next()
+    def __next__(self):
+        byte = next(self.file_generator)
         if self.yield_ord:
             return ord(byte)
         else:
@@ -294,7 +294,7 @@ class CasStream(object):
                     yield byte
 
     def get_ord(self):
-        byte = self.next()
+        byte = next(self)
         codepoint = ord(byte)
         return codepoint
 
@@ -324,7 +324,7 @@ def print_bit_list_stats(bit_list):
     >>> print_bit_list_stats([1,1,1,1,0,0,0,0])
     8 Bits: 4 positive bits and 4 negative bits
     """
-    print "%i Bits:" % len(bit_list),
+    print("%i Bits:" % len(bit_list), end=' ')
     positive_count = 0
     negative_count = 0
     for bit in bit_list:
@@ -334,15 +334,15 @@ def print_bit_list_stats(bit_list):
             negative_count += 1
         else:
             raise TypeError("Not a bit: %s" % repr(bit))
-    print "%i positive bits and %i negative bits" % (positive_count, negative_count)
+    print("%i positive bits and %i negative bits" % (positive_count, negative_count))
 
 
 if __name__ == "__main__":
     import doctest
-    print doctest.testmod(
+    print(doctest.testmod(
         verbose=False
         # verbose=True
-    )
+    ))
 #     sys.exit()
 
     # test via CLI:
@@ -359,9 +359,9 @@ if __name__ == "__main__":
         "../test_files/HelloWorld1.bas", "--dst=../test.cas"
     ]).wait()
 
-    print "\n"*3
-    print "="*79
-    print "\n"*3
+    print("\n"*3)
+    print("="*79)
+    print("\n"*3)
 
 #     # wav -> bas
     subprocess.Popen([sys.executable, "../PyDC_cli.py",
@@ -372,4 +372,4 @@ if __name__ == "__main__":
 #         "../test_files/HelloWorld1 origin.wav", "--dst=../test_files/HelloWorld1.bas",
     ]).wait()
 
-    print "-- END --"
+    print("-- END --")
